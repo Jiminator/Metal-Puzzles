@@ -1,5 +1,12 @@
 import mlx.core as mx
 from utils import MetalProblem, MetalKernel
+import sys
+
+if len(sys.argv) != 2:
+    print("Usage: python3 metal_puzzles.py {PUZZLE_NUMBER}")
+    sys.exit(1)
+
+puzzle_number = int(sys.argv[1])
 
 ############################################################
 ### Puzzle 1: Map
@@ -23,7 +30,7 @@ def map_spec(a: mx.array):
 def map_test(a: mx.array):
     source = """
         uint local_i = thread_position_in_grid.x;
-        // FILL ME IN (roughly 1 line)
+        out[local_i] = a[local_i] + 10;
     """
 
     kernel = MetalKernel(
@@ -35,22 +42,23 @@ def map_test(a: mx.array):
 
     return kernel
 
-SIZE = 4
-a = mx.arange(SIZE)
-output_shape = (SIZE,)
+if puzzle_number == 1:
+    SIZE = 4
+    a = mx.arange(SIZE)
+    output_shape = (SIZE,)
 
-problem = MetalProblem(
-    "Map",
-    map_test,
-    [a], 
-    output_shape,
-    grid=(SIZE,1,1), 
-    spec=map_spec
-)
+    problem = MetalProblem(
+        "Map",
+        map_test,
+        [a], 
+        output_shape,
+        grid=(SIZE,1,1), 
+        spec=map_spec
+    )
 
-problem.show()
+    problem.show()
 
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 2: Zip
@@ -65,7 +73,7 @@ def zip_spec(a: mx.array, b: mx.array):
 def zip_test(a: mx.array, b: mx.array):
     source = """
         uint local_i = thread_position_in_grid.x;
-        // FILL ME IN (roughly 1 line)
+        out[local_i] = a[local_i] + b[local_i];
     """
 
     kernel = MetalKernel(
@@ -77,23 +85,24 @@ def zip_test(a: mx.array, b: mx.array):
 
     return kernel
 
-SIZE = 4
-a = mx.arange(SIZE)
-b = mx.arange(SIZE)
-output_shapes = (SIZE,)
+if puzzle_number == 2:
+    SIZE = 4
+    a = mx.arange(SIZE)
+    b = mx.arange(SIZE)
+    output_shapes = (SIZE,)
 
-problem = MetalProblem(
-    "Zip",
-    zip_test,
-    [a, b],
-    output_shapes,
-    grid=(SIZE,1,1),
-    spec=zip_spec
-)
+    problem = MetalProblem(
+        "Zip",
+        zip_test,
+        [a, b],
+        output_shapes,
+        grid=(SIZE,1,1),
+        spec=zip_spec
+    )
 
-problem.show()
+    problem.show()
 
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 3: Guard
@@ -111,7 +120,9 @@ problem.check()
 def map_guard_test(a: mx.array):
     source = """
         uint local_i = thread_position_in_grid.x;
-        // FILL ME IN (roughly 1-3 lines)
+        if (local_i < a_shape[0]) {
+            out[local_i] = a[local_i] + 10;
+        }
     """
 
     kernel = MetalKernel(
@@ -123,22 +134,23 @@ def map_guard_test(a: mx.array):
 
     return kernel
 
-SIZE = 4
-a = mx.arange(SIZE)
-output_shape = (SIZE,)
+if puzzle_number == 3:
+    SIZE = 4
+    a = mx.arange(SIZE)
+    output_shape = (SIZE,)
 
-problem = MetalProblem(
-    "Guard",
-    map_guard_test,
-    [a], 
-    output_shape,
-    grid=(8,1,1), 
-    spec=map_spec
-)
+    problem = MetalProblem(
+        "Guard",
+        map_guard_test,
+        [a], 
+        output_shape,
+        grid=(8,1,1), 
+        spec=map_spec
+    )
 
-problem.show()
+    problem.show()
 
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 4: Map 2D
@@ -152,9 +164,11 @@ problem.check()
 
 def map_2D_test(a: mx.array):
     source = """
-        uint thread_x = thread_position_in_grid.x;
-        uint thread_y = thread_position_in_grid.y;
-        // FILL ME IN (roughly 4 lines)
+        uint Col = thread_position_in_grid.x;
+        uint Row = thread_position_in_grid.y;
+        if (Row < a_shape[0] && Col < a_shape[1]) {
+            out[Row * a_shape[1] + Col] = a[Row * a_shape[1] + Col] + 10;
+        }
     """
 
     kernel = MetalKernel(
@@ -165,23 +179,23 @@ def map_2D_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 4:
+    SIZE = 2
+    a = mx.arange(SIZE * SIZE).reshape((SIZE, SIZE))
+    output_shape = (SIZE, SIZE)
 
-SIZE = 2
-a = mx.arange(SIZE * SIZE).reshape((SIZE, SIZE))
-output_shape = (SIZE, SIZE)
+    problem = MetalProblem(
+        "Map 2D",
+        map_2D_test,
+        [a], 
+        output_shape,
+        grid=(3,3,1), 
+        spec=map_spec
+    )
 
-problem = MetalProblem(
-    "Map 2D",
-    map_2D_test,
-    [a], 
-    output_shape,
-    grid=(3,3,1), 
-    spec=map_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 5: Broadcast
@@ -191,9 +205,12 @@ problem.check()
 
 def broadcast_test(a: mx.array, b: mx.array):
     source = """
-        uint thread_x = thread_position_in_grid.x;
-        uint thread_y = thread_position_in_grid.y;
-        // FILL ME IN (roughly 4 lines)
+        uint Col = thread_position_in_grid.x;
+        uint Row = thread_position_in_grid.y;
+
+        if (Row < a_shape[0] && Col < b_shape[1]) {
+            out[Row * b_shape[1] + Col] = a[Row] + b[Col];
+        }
     """
 
     kernel = MetalKernel(
@@ -204,24 +221,24 @@ def broadcast_test(a: mx.array, b: mx.array):
     )
 
     return kernel
+if puzzle_number == 5:
+    SIZE = 2
+    a = mx.arange(SIZE).reshape(SIZE, 1)
+    b = mx.arange(SIZE).reshape(1, SIZE)
+    output_shape = (SIZE, SIZE)
 
-SIZE = 2
-a = mx.arange(SIZE).reshape(SIZE, 1)
-b = mx.arange(SIZE).reshape(1, SIZE)
-output_shape = (SIZE, SIZE)
+    problem = MetalProblem(
+        "Broadcast",
+        broadcast_test,
+        [a, b], 
+        output_shape,
+        grid=(3,3,1), 
+        spec=zip_spec
+    )
 
-problem = MetalProblem(
-    "Broadcast",
-    broadcast_test,
-    [a, b], 
-    output_shape,
-    grid=(3,3,1), 
-    spec=zip_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 6: Threadgroups
@@ -239,7 +256,9 @@ problem.check()
 def map_threadgroup_test(a: mx.array):
     source = """
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
-        // FILL ME IN (roughly 1-3 lines)
+        if (i < a_shape[0]) {
+            out[i] = a[i] + 10;
+        }
     """
 
     kernel = MetalKernel(
@@ -250,24 +269,24 @@ def map_threadgroup_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 6:
+    SIZE = 9
+    a = mx.arange(SIZE)
+    output_shape = (SIZE,)
 
-SIZE = 9
-a = mx.arange(SIZE)
-output_shape = (SIZE,)
+    problem = MetalProblem(
+        "Threadgroups",
+        map_threadgroup_test,
+        [a], 
+        output_shape,
+        grid=(12,1,1), 
+        threadgroup=(4,1,1),
+        spec=map_spec
+    )
 
-problem = MetalProblem(
-    "Threadgroups",
-    map_threadgroup_test,
-    [a], 
-    output_shape,
-    grid=(12,1,1), 
-    threadgroup=(4,1,1),
-    spec=map_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 7: Threadgroups 2D
@@ -278,8 +297,11 @@ problem.check()
 
 def map_threadgroup_2D_test(a: mx.array):
     source = """
-        uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
-        // FILL ME IN (roughly 5 lines)
+        uint Col = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
+        uint Row = threadgroup_position_in_grid.y * threads_per_threadgroup.y + thread_position_in_threadgroup.y;
+        if (Row < a_shape[0] && Col < a_shape[1]) {
+            out[Row * a_shape[1] + Col] = a[Row * a_shape[1] + Col] + 10;
+        }
     """
 
     kernel = MetalKernel(
@@ -290,24 +312,24 @@ def map_threadgroup_2D_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 7:
+    SIZE = 5
+    a = mx.ones((SIZE, SIZE))
+    output_shape = (SIZE, SIZE)
 
-SIZE = 5
-a = mx.ones((SIZE, SIZE))
-output_shape = (SIZE, SIZE)
+    problem = MetalProblem(
+        "Threadgroups 2D",
+        map_threadgroup_2D_test,
+        [a], 
+        output_shape,
+        grid=(6,6,1), 
+        threadgroup=(3,3,1),
+        spec=map_spec
+    )
 
-problem = MetalProblem(
-    "Threadgroups 2D",
-    map_threadgroup_2D_test,
-    [a], 
-    output_shape,
-    grid=(6,6,1), 
-    threadgroup=(3,3,1),
-    spec=map_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 8: Threadgroup Memory
@@ -345,9 +367,8 @@ def shared_test(a: mx.array):
         if (i < a_shape[0]) {
             shared[local_i] = a[i];
             threadgroup_barrier(mem_flags::mem_threadgroup);
+            out[i] = shared[local_i] + 10;
         }
-
-        // FILL ME IN (roughly 1-3 lines)
     """
 
     kernel = MetalKernel(
@@ -359,24 +380,24 @@ def shared_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 8:
+    SIZE = 8
+    a = mx.ones(SIZE)
+    output_shape = (SIZE,)
 
-SIZE = 8
-a = mx.ones(SIZE)
-output_shape = (SIZE,)
+    problem = MetalProblem(
+        "Threadgroup Memory",
+        shared_test,
+        [a], 
+        output_shape,
+        grid=(SIZE,1,1), 
+        threadgroup=(4,1,1),
+        spec=map_spec
+    )
 
-problem = MetalProblem(
-    "Threadgroup Memory",
-    shared_test,
-    [a], 
-    output_shape,
-    grid=(SIZE,1,1), 
-    threadgroup=(4,1,1),
-    spec=map_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 9: Pooling
@@ -408,7 +429,18 @@ def pooling_test(a: mx.array):
         threadgroup float shared[THREADGROUP_MEM_SIZE];
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
         uint local_i = thread_position_in_threadgroup.x;
-        // FILL ME IN (roughly 11 lines)
+        if (i < a_shape[0]) {
+            shared[local_i] = a[i];
+            threadgroup_barrier(mem_flags::mem_threadgroup);
+            float result = shared[local_i];
+            if (i > 0) {
+                result += shared[local_i - 1];
+            }
+            if (i > 1) {
+                result += shared[local_i - 2];
+            }
+            out[i] = result;
+        }
     """
 
     kernel = MetalKernel(
@@ -420,24 +452,24 @@ def pooling_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 9:
+    SIZE = 8
+    a = mx.arange(SIZE)
+    output_shape = (SIZE,)
 
-SIZE = 8
-a = mx.arange(SIZE)
-output_shape = (SIZE,)
+    problem = MetalProblem(
+        "Pooling",
+        pooling_test,
+        [a], 
+        output_shape,
+        grid=(SIZE,1,1), 
+        threadgroup=(SIZE,1,1),
+        spec=pooling_spec
+    )
 
-problem = MetalProblem(
-    "Pooling",
-    pooling_test,
-    [a], 
-    output_shape,
-    grid=(SIZE,1,1), 
-    threadgroup=(SIZE,1,1),
-    spec=pooling_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 10: Dot Product
@@ -462,7 +494,20 @@ def dot_test(a: mx.array, b: mx.array):
         threadgroup float shared[THREADGROUP_MEM_SIZE];
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
         uint local_i = thread_position_in_threadgroup.x;
-        // FILL ME IN (roughly 11 lines)
+        if (i < a_shape[0]) {
+            shared[local_i] = a[i] * b[i];
+            threadgroup_barrier(mem_flags::mem_threadgroup);
+        }
+        for (uint offset = threads_per_threadgroup.x / 2; offset > 0; offset /= 2) {
+            if (local_i < offset) {
+                shared[local_i] += shared[local_i + offset];
+            }
+            threadgroup_barrier(mem_flags::mem_threadgroup);
+        }
+
+        if (local_i == 0) {
+            out[threadgroup_position_in_grid.x] = shared[0];
+        }
     """
 
     kernel = MetalKernel(
@@ -474,25 +519,25 @@ def dot_test(a: mx.array, b: mx.array):
     )
 
     return kernel
+if puzzle_number == 10:
+    SIZE = 8
+    a = mx.arange(SIZE, dtype=mx.float32)
+    b = mx.arange(SIZE, dtype=mx.float32)
+    output_shape = (1,)
 
-SIZE = 8
-a = mx.arange(SIZE, dtype=mx.float32)
-b = mx.arange(SIZE, dtype=mx.float32)
-output_shape = (1,)
+    problem = MetalProblem(
+        "Dot Product",
+        dot_test,
+        [a, b], 
+        output_shape,
+        grid=(SIZE,1,1), 
+        threadgroup=(SIZE,1,1),
+        spec=dot_spec
+    )
 
-problem = MetalProblem(
-    "Dot Product",
-    dot_test,
-    [a, b], 
-    output_shape,
-    grid=(SIZE,1,1), 
-    threadgroup=(SIZE,1,1),
-    spec=dot_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 11: 1D Convolution
@@ -515,9 +560,33 @@ def conv_test(a: mx.array, b: mx.array):
     """
 
     source = """
+                threadgroup float shared_A[THREADGROUP_MAX_CONV_SIZE];
+        threadgroup float shared_B[MAX_CONV_SIZE];
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
         uint local_i = thread_position_in_threadgroup.x;
-        // FILL ME IN (roughly 24 lines)
+        uint TPB = THREADGROUP_MAX_CONV_SIZE - MAX_CONV_SIZE;
+        if (i < a_shape[0]) {
+            shared_A[local_i] = a[i];
+        }
+        if (local_i < b_shape[0]) {
+            shared_B[local_i] = b[local_i];
+        } else {
+            int local_i2 = local_i - b_shape[0];
+            int i2 = i - b_shape[0];
+            if (TPB + i2 < a_shape[0] && local_i2 < b_shape[0]) {
+                shared_A[TPB + local_i2] = a[i2 + TPB];
+            }
+        }
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+        int acc = 0;
+        for (int k = 0; k < b_shape[0]; k++) {
+            if (i + k < a_shape[0]) {
+                acc += shared_A[local_i + k] * shared_B[k];
+            }
+        }
+        if (i < a_shape[0]){
+            out[i] = acc;
+        }
     """
 
     kernel = MetalKernel(
@@ -529,46 +598,46 @@ def conv_test(a: mx.array, b: mx.array):
     )
 
     return kernel
+if puzzle_number == 11:
+    # Test 1
+    SIZE = 6
+    CONV = 3
+    a = mx.arange(SIZE, dtype=mx.float32)
+    b = mx.arange(CONV, dtype=mx.float32)
+    output_shape = (SIZE,)
 
-# Test 1
-SIZE = 6
-CONV = 3
-a = mx.arange(SIZE, dtype=mx.float32)
-b = mx.arange(CONV, dtype=mx.float32)
-output_shape = (SIZE,)
+    problem = MetalProblem(
+        "1D Conv (Simple)",
+        conv_test,
+        [a, b], 
+        output_shape,
+        grid=(8,1,1), 
+        threadgroup=(8,1,1),
+        spec=conv_spec
+    )
 
-problem = MetalProblem(
-    "1D Conv (Simple)",
-    conv_test,
-    [a, b], 
-    output_shape,
-    grid=(8,1,1), 
-    threadgroup=(8,1,1),
-    spec=conv_spec
-)
+    problem.show()
 
-problem.show()
+    problem.check()
 
-problem.check()
+    # Test 2
+    a = mx.arange(15, dtype=mx.float32)
+    b = mx.arange(4, dtype=mx.float32)
+    output_shape = (15,)
 
-# Test 2
-a = mx.arange(15, dtype=mx.float32)
-b = mx.arange(4, dtype=mx.float32)
-output_shape = (15,)
+    problem = MetalProblem(
+        "1D Conv (Full)",
+        conv_test,
+        [a, b], 
+        output_shape,
+        grid=(16,1,1), 
+        threadgroup=(8,1,1),
+        spec=conv_spec
+    )
 
-problem = MetalProblem(
-    "1D Conv (Full)",
-    conv_test,
-    [a, b], 
-    output_shape,
-    grid=(16,1,1), 
-    threadgroup=(8,1,1),
-    spec=conv_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 12: Prefix Sum
@@ -597,7 +666,24 @@ def prefix_sum_test(a: mx.array):
         threadgroup float cache[THREADGROUP_MEM_SIZE];
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
         uint local_i = thread_position_in_threadgroup.x;
-        // FILL ME IN (roughly 14 lines)
+        if (i < a_shape[0]){
+            cache[local_i] = a[i];
+        } else {
+            cache[local_i] = 0;
+        }
+        if (i < a_shape[0]){
+            threadgroup_barrier(mem_flags::mem_threadgroup);
+            for (int k = 0; k < 3; k++) {
+                int p = 1 << k;
+                if (local_i % (p * 2) == 0 && local_i + p < THREADGROUP_MEM_SIZE){
+                    cache[local_i] += cache[local_i + p];
+                }
+                threadgroup_barrier(mem_flags::mem_threadgroup);
+            }
+            if (local_i == 0){
+                out[threadgroup_position_in_grid.x] = cache[local_i];
+            } 
+        }
     """
 
     kernel = MetalKernel(
@@ -609,44 +695,44 @@ def prefix_sum_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 12:
+    # Test 1
+    SIZE = 8
+    a = mx.arange(SIZE)
+    output_shape = (1,)
 
-# Test 1
-SIZE = 8
-a = mx.arange(SIZE)
-output_shape = (1,)
+    problem = MetalProblem(
+        "Prefix Sum (Simple)",
+        prefix_sum_test,
+        [a], 
+        output_shape,
+        grid=(8,1,1), 
+        threadgroup=(8,1,1),
+        spec=prefix_sum_spec
+    )
 
-problem = MetalProblem(
-    "Prefix Sum (Simple)",
-    prefix_sum_test,
-    [a], 
-    output_shape,
-    grid=(8,1,1), 
-    threadgroup=(8,1,1),
-    spec=prefix_sum_spec
-)
+    problem.show()
 
-problem.show()
+    problem.check()
 
-problem.check()
+    # Test 2
+    SIZE = 15
+    a = mx.arange(SIZE)
+    output_shape = (2,)
 
-# Test 2
-SIZE = 15
-a = mx.arange(SIZE)
-output_shape = (2,)
+    problem = MetalProblem(
+        "Prefix Sum (Full)",
+        prefix_sum_test,
+        [a], 
+        output_shape,
+        grid=(16,1,1), 
+        threadgroup=(8,1,1),
+        spec=prefix_sum_spec
+    )
 
-problem = MetalProblem(
-    "Prefix Sum (Full)",
-    prefix_sum_test,
-    [a], 
-    output_shape,
-    grid=(16,1,1), 
-    threadgroup=(8,1,1),
-    spec=prefix_sum_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 13: Axis Sum
@@ -683,25 +769,25 @@ def axis_sum_test(a: mx.array):
     )
 
     return kernel
+if puzzle_number == 13:
+    BATCH = 4
+    SIZE = 6
+    a = mx.arange(BATCH * SIZE).reshape((BATCH, SIZE))
+    output_shape = (BATCH, 1)
 
-BATCH = 4
-SIZE = 6
-a = mx.arange(BATCH * SIZE).reshape((BATCH, SIZE))
-output_shape = (BATCH, 1)
+    problem = MetalProblem(
+        "Axis Sum",
+        axis_sum_test,
+        [a], 
+        output_shape,
+        grid=(8,BATCH,1), 
+        threadgroup=(8,1,1),
+        spec=axis_sum_spec
+    )
 
-problem = MetalProblem(
-    "Axis Sum",
-    axis_sum_test,
-    [a], 
-    output_shape,
-    grid=(8,BATCH,1), 
-    threadgroup=(8,1,1),
-    spec=axis_sum_spec
-)
+    problem.show()
 
-problem.show()
-
-problem.check()
+    problem.check()
 
 ############################################################
 ### Puzzle 14: Matrix Multiply!
@@ -748,41 +834,42 @@ def matmul_test(a: mx.array, b: mx.array):
     return kernel
 
 # Test 1
-SIZE = 2
-a = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE))
-b = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE)).T
-output_shape = (SIZE, SIZE)
+if puzzle_number == 14:
+    SIZE = 2
+    a = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE))
+    b = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE)).T
+    output_shape = (SIZE, SIZE)
 
-problem = MetalProblem(
-    "Matmul (Simple)",
-    matmul_test,
-    [a, b], 
-    output_shape,
-    grid=(3,3,1), 
-    threadgroup=(3,3,1),
-    spec=matmul_spec
-)
+    problem = MetalProblem(
+        "Matmul (Simple)",
+        matmul_test,
+        [a, b], 
+        output_shape,
+        grid=(3,3,1), 
+        threadgroup=(3,3,1),
+        spec=matmul_spec
+    )
 
-problem.show()
+    problem.show()
 
-problem.check()
+    problem.check()
 
-# Test 2
-SIZE = 8
-a = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE))
-b = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE)).T
-output_shape = (SIZE, SIZE)
+    # Test 2
+    SIZE = 8
+    a = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE))
+    b = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE)).T
+    output_shape = (SIZE, SIZE)
 
-problem = MetalProblem(
-    "Matmul (Full)",
-    matmul_test,
-    [a, b], 
-    output_shape,
-    grid=(9,9,1), 
-    threadgroup=(3,3,1),
-    spec=matmul_spec
-)
+    problem = MetalProblem(
+        "Matmul (Full)",
+        matmul_test,
+        [a, b], 
+        output_shape,
+        grid=(9,9,1), 
+        threadgroup=(3,3,1),
+        spec=matmul_spec
+    )
 
-problem.show()
+    problem.show()
 
-problem.check()
+    problem.check()
