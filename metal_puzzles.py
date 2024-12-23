@@ -42,7 +42,7 @@ def map_test(a: mx.array):
 
     return kernel
 
-if puzzle_number == 1:
+if puzzle_number == 0 or puzzle_number == 1:
     SIZE = 4
     a = mx.arange(SIZE)
     output_shape = (SIZE,)
@@ -85,7 +85,7 @@ def zip_test(a: mx.array, b: mx.array):
 
     return kernel
 
-if puzzle_number == 2:
+if puzzle_number == 0 or puzzle_number == 2:
     SIZE = 4
     a = mx.arange(SIZE)
     b = mx.arange(SIZE)
@@ -134,7 +134,7 @@ def map_guard_test(a: mx.array):
 
     return kernel
 
-if puzzle_number == 3:
+if puzzle_number == 0 or puzzle_number == 3:
     SIZE = 4
     a = mx.arange(SIZE)
     output_shape = (SIZE,)
@@ -179,7 +179,7 @@ def map_2D_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 4:
+if puzzle_number == 0 or puzzle_number == 4:
     SIZE = 2
     a = mx.arange(SIZE * SIZE).reshape((SIZE, SIZE))
     output_shape = (SIZE, SIZE)
@@ -221,7 +221,7 @@ def broadcast_test(a: mx.array, b: mx.array):
     )
 
     return kernel
-if puzzle_number == 5:
+if puzzle_number == 0 or puzzle_number == 5:
     SIZE = 2
     a = mx.arange(SIZE).reshape(SIZE, 1)
     b = mx.arange(SIZE).reshape(1, SIZE)
@@ -269,7 +269,7 @@ def map_threadgroup_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 6:
+if puzzle_number == 0 or puzzle_number == 6:
     SIZE = 9
     a = mx.arange(SIZE)
     output_shape = (SIZE,)
@@ -312,7 +312,7 @@ def map_threadgroup_2D_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 7:
+if puzzle_number == 0 or puzzle_number == 7:
     SIZE = 5
     a = mx.ones((SIZE, SIZE))
     output_shape = (SIZE, SIZE)
@@ -380,7 +380,7 @@ def shared_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 8:
+if puzzle_number == 0 or puzzle_number == 8:
     SIZE = 8
     a = mx.ones(SIZE)
     output_shape = (SIZE,)
@@ -452,7 +452,7 @@ def pooling_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 9:
+if puzzle_number == 0 or puzzle_number == 9:
     SIZE = 8
     a = mx.arange(SIZE)
     output_shape = (SIZE,)
@@ -519,7 +519,7 @@ def dot_test(a: mx.array, b: mx.array):
     )
 
     return kernel
-if puzzle_number == 10:
+if puzzle_number == 0 or puzzle_number == 10:
     SIZE = 8
     a = mx.arange(SIZE, dtype=mx.float32)
     b = mx.arange(SIZE, dtype=mx.float32)
@@ -598,7 +598,7 @@ def conv_test(a: mx.array, b: mx.array):
     )
 
     return kernel
-if puzzle_number == 11:
+if puzzle_number == 0 or puzzle_number == 11:
     # Test 1
     SIZE = 6
     CONV = 3
@@ -695,7 +695,7 @@ def prefix_sum_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 12:
+if puzzle_number == 0 or puzzle_number == 12:
     # Test 1
     SIZE = 8
     a = mx.arange(SIZE)
@@ -787,7 +787,7 @@ def axis_sum_test(a: mx.array):
     )
 
     return kernel
-if puzzle_number == 13:
+if puzzle_number == 0 or puzzle_number == 13:
     BATCH = 4
     SIZE = 6
     a = mx.arange(BATCH * SIZE).reshape((BATCH, SIZE))
@@ -871,7 +871,7 @@ def matmul_test(a: mx.array, b: mx.array):
     return kernel
 
 # Test 1
-if puzzle_number == 14:
+if puzzle_number == 0 or puzzle_number == 14:
     SIZE = 2
     a = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE))
     b = mx.arange(SIZE * SIZE, dtype=mx.float32).reshape((SIZE, SIZE)).T

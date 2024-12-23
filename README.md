@@ -20,6 +20,9 @@ import mlx.core as mx
 from utils import MetalKernel, MetalProblem
 ```
 
+To run the `metal_puzzles.py` script, run `python3 metal_puzzles.py PUZZLE_NUMBER`, use 0 if you want to run tests of all puzzles at once.
+
+
 ## Puzzle 1: Map
 
 Implement a "kernel" (GPU function) that adds 10 to each position of the array `a` and stores it in the array `out`.  You have 1 thread per position.
