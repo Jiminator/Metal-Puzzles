@@ -671,11 +671,11 @@ def prefix_sum_test(a: mx.array):
         } else {
             cache[local_i] = 0;
         }
+        threadgroup_barrier(mem_flags::mem_threadgroup);
         if (i < a_shape[0]){
-            threadgroup_barrier(mem_flags::mem_threadgroup);
             for (int k = 0; k < 3; k++) {
                 int p = 1 << k;
-                if (local_i % (p * 2) == 0 && local_i + p < THREADGROUP_MEM_SIZE){
+                if (local_i % (p * 2) == 0 && local_i + p < a_shape[0]) {
                     cache[local_i] += cache[local_i + p];
                 }
                 threadgroup_barrier(mem_flags::mem_threadgroup);
@@ -757,7 +757,25 @@ def axis_sum_test(a: mx.array):
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
         uint local_i = thread_position_in_threadgroup.x;
         uint batch = threadgroup_position_in_grid.y;
-        // FILL ME IN (roughly 16 lines)
+        
+        if (i < a_shape[1]){
+            cache[local_i] = a[batch * a_shape[1] + i];
+        } else {
+            cache[local_i] = 0;
+        }
+        if (i < a_shape[1]){
+            threadgroup_barrier(mem_flags::mem_threadgroup);
+            for (int k = 0; k < 3; k++) {
+                int p = 1 << k;
+                if (local_i % (p * 2) == 0 && local_i + p < a_shape[1]){
+                    cache[local_i] += cache[local_i + p];
+                }
+                threadgroup_barrier(mem_flags::mem_threadgroup);
+            }
+            if (local_i == 0){
+                out[batch] = cache[local_i];
+            } 
+        }
     """
 
     kernel = MetalKernel(
@@ -812,7 +830,7 @@ def matmul_test(a: mx.array, b: mx.array):
     """
 
     source = """
-        threadgroup float a_shared[THREADGROUP_MEM_SIZE][THREADGROUP_MEM_SIZE];
+                threadgroup float a_shared[THREADGROUP_MEM_SIZE][THREADGROUP_MEM_SIZE];
         threadgroup float b_shared[THREADGROUP_MEM_SIZE][THREADGROUP_MEM_SIZE];
 
         uint i = threadgroup_position_in_grid.x * threads_per_threadgroup.x + thread_position_in_threadgroup.x;
@@ -820,7 +838,26 @@ def matmul_test(a: mx.array, b: mx.array):
 
         uint local_i = thread_position_in_threadgroup.x;
         uint local_j = thread_position_in_threadgroup.y;
-        // FILL ME IN (roughly 19 lines)
+         
+        int acc = 0;
+        for (int k = 0; k < a_shape[1]; k += THREADGROUP_MEM_SIZE) {
+            if (i < a_shape[0] && k + local_j < a_shape[1]) {
+                a_shared[local_i][local_j] = a[i * a_shape[1] + (k + local_j)];
+            }
+            if (j < b_shape[1] && k + local_i < b_shape[0]) {
+                b_shared[local_i][local_j] = b[(k + local_i) * b_shape[1] + j];
+            }
+            threadgroup_barrier(mem_flags::mem_threadgroup);
+            
+            for (int local_k = 0; local_k < THREADGROUP_MEM_SIZE; local_k++) {
+                if (k + local_k < a_shape[1]){
+                    acc += a_shared[local_i][local_k] * b_shared[local_k][local_j];
+                }
+            }
+        }
+        if (i < a_shape[0] && j < b_shape[1]) {
+            out[i * b_shape[1] + j] = acc;   
+        }   
     """
 
     kernel = MetalKernel(
